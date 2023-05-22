@@ -8,7 +8,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
 #define BUFSZ 1024
 
 int main(int argc, char **argv){
@@ -144,6 +143,7 @@ int main(int argc, char **argv){
 			printf("%s\n", buf);
 			break;
 		}else{
+			break;
 		}
 
 	}
