@@ -31,10 +31,6 @@ int main(int argc, char **argv){
 	if (0 != connect(s, addr, sizeof(storage))) {
 		DieWithSystemMessage("Erro ao connectar!");
 	}
-	char addrstr[BUFSZ];
-	addrtostr(addr, addrstr, BUFSZ);
-	printf("connect to %s\n", addrstr);
-	
 	char buf[BUFSZ], splitBuf[BUFSZ];
 	FILE *ptr; // = fopen("teste.txt", "r"); // TODO: REMOVE IT;
 	char filename[BUFSZ]; // = "teste.txt";
@@ -43,12 +39,12 @@ int main(int argc, char **argv){
 		char del[] = " ";
 		memset(buf, 0, BUFSZ);
 		memset(splitBuf, 0, BUFSZ);
-		printf("Mensagem> ");
 		fgets(buf, BUFSZ-1, stdin);
 		buf[strlen(buf)-1] = '\0';
+
 		strcpy(splitBuf, buf);
 		char *strPtr = strtok(splitBuf, del);
-		char *AstrSplit[3];
+		char *AstrSplit[3]; // To Check extension
 		int nSplits = 0;
 		while(strPtr){
 			AstrSplit[nSplits++] = strPtr;
@@ -80,6 +76,7 @@ int main(int argc, char **argv){
 					printf("%s selected\n", AstrSplit[2]);
 				}else{
 					printf("%s not valid!\n", AstrSplit[2]);
+					ptr = NULL;
 				}
 
 			}else{
@@ -89,7 +86,7 @@ int main(int argc, char **argv){
 			if(ptr){
 				ptr = fopen(filename, "r");
 				if(!ptr) {
-						printf("%s does not exist", filename);
+					printf("%s does not exist\n", filename);
 					continue;
 				}
 				char content[BUFSZ];
@@ -124,10 +121,15 @@ int main(int argc, char **argv){
 				printf("no file selected!\n");
 			}
 		}else if(!strcmp(AstrSplit[0], "exit")){
-			char content[] = "exit\\en";
-			content[strlen(content)] = 'd';
-			size_t count = send(s, content, strlen(content), 0);
-			if(count != strlen(content)){
+			char exit[8];
+			memset(exit, 0, 8);
+			strcpy(exit, AstrSplit[0]);
+			exit[4] = '\\';
+			exit[5] = 'e';
+			exit[6] = 'n';
+			exit[7] = 'd';
+			size_t count = send(s, exit, 8, 0);
+			if(count != 8){
 				DieWithSystemMessage("Erro ao enviar!");
 			}
 			memset(buf, 0, BUFSZ);

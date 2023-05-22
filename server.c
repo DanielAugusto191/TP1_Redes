@@ -66,12 +66,11 @@ int main(int argc, char *argv[]){
 			if(!strcmp(buf, "exit")){
 				char ans[] = "connection closed\\en";
 				ans[strlen(ans)] = 'd';
-				size_t count = send(csock, ans, strlen(ans), 0);
-				if(count != strlen(ans)) DieWithSystemMessage("bytes erro!");
+				size_t count = send(csock, ans, 21, 0);
+				if(count != 21) DieWithSystemMessage("bytes erro!");
 				close(csock);
 				exit(EXIT_SUCCESS);
 			}
-	
 			// Recovering the file name from the header.
 			char filename[BUFSZ];
 			strcpy(filename, buf);
@@ -85,7 +84,7 @@ int main(int argc, char *argv[]){
 			if(fopen(filename, "r")){
 				remove(filename);
 				sprintf(ans, "file %.1000s overwritten", filename);
-			} else sprintf(ans, "file %.1000s recieved", filename);
+			} else sprintf(ans, "file %.1000s received", filename);
 	
 			// Writting in file
 			FILE *ptr = fopen(filename, "w+");
