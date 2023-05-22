@@ -34,46 +34,118 @@ int main(int argc, char **argv){
 	char addrstr[BUFSZ];
 	addrtostr(addr, addrstr, BUFSZ);
 	printf("connect to %s\n", addrstr);
-
-	// Send msg
+	
 	char buf[BUFSZ], splitBuf[BUFSZ];
-	char del[] = " ";
-	memset(buf, 0, BUFSZ);
-	memset(splitBuf, 0, BUFSZ);
-	printf("Mensagem> ");
-	fgets(buf, BUFSZ-1, stdin);
-	strcpy(splitBuf, buf);
-	char *strPtr = strtok(splitBuf, del);
-	char *AstrSplit[3];
-	int nSplits = 0;
-	while(strPtr){
-		AstrSplit[nSplits++] = strPtr;
-		strPtr = strtok(NULL, del);
-	}
-	if(!strcmp(AstrSplit[0], "select")){
-		printf("OK!\n");
-	}
-//	FILE* ptr = fopen("")
-
-	size_t count = send(s, buf, strlen(buf)+1, 0);
-	if(count != strlen(buf)+1){
-		DieWithSystemMessage("Erro ao enviar!");
-	}
-
-	// Recieve Msg
-	memset(buf, 0, BUFSZ);
-	unsigned total = 0;
+	FILE *ptr; // = fopen("teste.txt", "r"); // TODO: REMOVE IT;
+	char filename[BUFSZ]; // = "teste.txt";
 	while(1){
-		count = recv(s, buf + total, BUFSZ-total, 0);
-		if(count == 0){
-			// Terminou conexão.
-			break;
+		// Send msg
+		char del[] = " ";
+		memset(buf, 0, BUFSZ);
+		memset(splitBuf, 0, BUFSZ);
+		printf("Mensagem> ");
+		fgets(buf, BUFSZ-1, stdin);
+		buf[strlen(buf)-1] = '\0';
+		strcpy(splitBuf, buf);
+		char *strPtr = strtok(splitBuf, del);
+		char *AstrSplit[3];
+		int nSplits = 0;
+		while(strPtr){
+			AstrSplit[nSplits++] = strPtr;
+			strPtr = strtok(NULL, del);
 		}
-		total += count;
-	}
+		if(!strcmp(AstrSplit[0], "select")){
+			FILE *test_ptr = fopen(AstrSplit[2], "r");
+			if(test_ptr){
+				ptr = fopen(AstrSplit[2], "r");
+				strcpy(filename, AstrSplit[2]);
+				char del[] = "."; int extsize = 0;
+				char *fileExtension[2];
+				char *fileExtensionSplit = strtok(filename, del);
+				while(fileExtensionSplit){
+					fileExtension[extsize++] = fileExtensionSplit;
+					fileExtensionSplit = strtok(NULL, del);
+				}
+				if(extsize == 0) printf("%s not valid!", AstrSplit[2]);
+				char *validExtensions[] = {"txt", "c", "cpp", "py", "tex", "java"};
+				int valid = 0;
+				for(int i=0;i<6;++i) {
+					if(!strcmp(validExtensions[i], fileExtension[extsize-1])){
+						valid = 1;
+						break;
+					}
+				}
+				if(valid) {
+					strcpy(filename, AstrSplit[2]);
+					printf("%s selected\n", AstrSplit[2]);
+				}else{
+					printf("%s not valid!\n", AstrSplit[2]);
+				}
 
+			}else{
+				printf("%s does not exist\n", AstrSplit[2]);
+			}
+		}else if(!strcmp(AstrSplit[0], "send")){
+			if(ptr){
+				ptr = fopen(filename, "r");
+				if(!ptr) {
+						printf("%s does not exist", filename);
+					continue;
+				}
+				char content[BUFSZ];
+				memset(content, 0, BUFSZ);
+				strcpy(content, filename);
+				content[strlen(content)] = '|';
+				int contentOffset = strlen(content);
+				while(fgets(content+contentOffset, BUFSZ-contentOffset, ptr)){
+					contentOffset = strlen(content);
+				}
+				content[contentOffset] = '\\';
+				content[contentOffset+1] = 'e';
+				content[contentOffset+2] = 'n';
+				content[contentOffset+3] = 'd';
+				// SEND
+				size_t count = send(s, content, strlen(content), 0);
+				if(count != strlen(content)){
+					DieWithSystemMessage("Erro ao enviar!");
+				}
+				// Recieve Msg
+				memset(buf, 0, BUFSZ);
+				unsigned total = 0;
+				while(1){
+					size_t count = recv(s, buf + total, BUFSZ-total, 0);
+					total += count;
+					if(count == 0) break;
+					if(buf[total-4] == '\\' && buf[total-3] == 'e' && buf[total-2] == 'n' && buf[total-1] == 'd') break;
+				}
+				buf[strlen(buf)-4] = '\0';
+				printf("%s\n", buf);
+			}else{
+				printf("no file selected!\n");
+			}
+		}else if(!strcmp(AstrSplit[0], "exit")){
+			char content[] = "exit\\en";
+			content[strlen(content)] = 'd';
+			size_t count = send(s, content, strlen(content), 0);
+			if(count != strlen(content)){
+				DieWithSystemMessage("Erro ao enviar!");
+			}
+			memset(buf, 0, BUFSZ);
+			unsigned total = 0;
+			while(1){
+				size_t count = recv(s, buf + total, BUFSZ-total, 0);
+				total += count;
+				if(count == 0) break;
+				if(buf[total-4] == '\\' && buf[total-3] == 'e' && buf[total-2] == 'n' && buf[total-1] == 'd') break;
+			}
+			buf[strlen(buf)-4] = '\0';
+			printf("%s\n", buf);
+			break;
+		}else{
+		}
+
+	}
+	if(ptr != NULL) fclose(ptr);
 	close(s);
-	printf("Received %u bytes\n", total);
-	puts(buf);
 	exit(EXIT_SUCCESS);
 }
